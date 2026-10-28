@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='david',
     maintainer_email='david.collazos_her@uao.edu.co',
-    description='TODO: Package description',
+    description='Cinemática directa/inversa del muñeco bípedo (nodo kinematics_node unificado)',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -25,11 +25,6 @@ setup(
     entry_points={
         'console_scripts': [
             'kinematics_node = robot_kinematics.kinematics_node:main',
-            'ik_node = robot_kinematics.ik_node:main',
-            'ik_newton_node = robot_kinematics.ik_newton_node:main',
-            'ik_des_node = robot_kinematics.ik_des_node:main',
-            'ik_geom_node = robot_kinematics.ik_geom_node:main',
-            'ik_grad_node = robot_kinematics.ik_grad_node:main',
         ],
     },
 )
