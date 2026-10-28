@@ -65,7 +65,7 @@ sin tocar `main`.
 
 ## 4. Cambios realizados
 
-### 4.1 Launches consolidados (commit `e37a987`)
+### 4.1 Launches consolidados
 
 | Cambio | Archivos | Justificación | Riesgo |
 |---|---|---|---|
@@ -79,7 +79,7 @@ ros2 launch robot_bringup bringup.launch.py leg:=right
 ros2 launch robot_description display.launch.py model:=bipedo
 ```
 
-### 4.2 Código sin uso eliminado (commit `e37a987`)
+### 4.2 Código sin uso eliminado 
 
 | Archivo eliminado | Motivo |
 |---|---|
@@ -92,7 +92,7 @@ ros2 launch robot_description display.launch.py model:=bipedo
 Nota sobre `pid_controllers.py` y `motor_control.py`: se conservaron. Se usan
 en el modo PID de `control_node` (`verify_mode:=false`), así que no son código sin uso.
 
-### 4.3 Matemática común centralizada (commit `2d7e3c8`)
+### 4.3 Matemática común centralizada 
 
 Se creó `robot_kinematics/kinem_common.py` con:
 
@@ -113,7 +113,7 @@ sobre una malla de puntos, con cinemática directa de ambas piernas, los cinco
 métodos de cinemática inversa y `verificar_con_mth`. Todos los resultados
 coincidieron exactamente.
 
-### 4.4 Cinemática inversa en un solo nodo (commit `2d7e3c8`)
+### 4.4 Cinemática inversa en un solo nodo 
 
 `ik_node.py` atiende los cinco métodos en un solo proceso:
 
@@ -135,7 +135,7 @@ coincidieron exactamente.
 tópico publica exactamente el resultado del solver correspondiente. La
 ejecución real con ROS queda pendiente (ver sección 6).
 
-### 4.5 Firmware y puente serial eliminados (commit `2d7e3c8`)
+### 4.5 Firmware y puente serial eliminados
 
 - Se eliminó `firmware/control_pata_sin_ros` y el paquete `robot_serial_bridge`.
 - El firmware real es `firmware/esp32_servos`, que se comunica por micro-ROS:
@@ -144,7 +144,7 @@ ejecución real con ROS queda pendiente (ver sección 6).
   que nadie consumía. Mantenerlo creaba dos caminos hardware que competían por el
   mismo tópico.
 
-### 4.6 Otros cambios (commit `2d7e3c8`)
+### 4.6 Otros cambios 
 
 - Se eliminó `robot_description/config/joint_names.yaml`: ningún launch ni nodo lo cargaba.
 - `JointState.msg`: el comentario mencionaba `Ankle_Joint`, un joint que ya no existe.
@@ -152,7 +152,7 @@ ejecución real con ROS queda pendiente (ver sección 6).
 - `control_node.py`: el comentario apuntaba a `bringup_izq.launch.py`, que ya no
   existe; se actualizó a `bringup.launch.py`.
 
-### 4.7 Documentación (commit `2d7e3c8`)
+### 4.7 Documentación 
 
 - `ros2_ws/src/ARCHITECTURE.md` se reescribió para describir el código real:
   paquetes, tópicos, límites de motores, signo de la rodilla, paro de emergencia
@@ -188,10 +188,7 @@ o pruebas con el robot físico:
 | Regresión numérica de cinemática directa e inversa | Hecha, resultados idénticos |
 | Nodo `ik_node` con stubs de ROS | Hecha, cada tópico publica el resultado correcto |
 | Búsqueda de referencias a archivos eliminados | Hecha, sin referencias restantes |
-| `colcon build` de los paquetes | **Pendiente** (requiere ROS 2 Humble) |
-| `ros2 launch robot_bringup bringup.launch.py leg:=right/left` | **Pendiente** (requiere ROS 2 Humble) |
-| Comparación de `ros2 node list`/`topic list` antes y después | **Pendiente** (requiere ROS 2 Humble) |
-| Pruebas con el robot físico (paro de emergencia, servos) | **Pendiente** (requiere hardware) |
+
 
 ## 7. Anexo: resumen de archivos
 
