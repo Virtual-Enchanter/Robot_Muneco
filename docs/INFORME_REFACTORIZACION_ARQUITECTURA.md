@@ -191,7 +191,7 @@ o pruebas con el robot físico:
 | `colcon build` de los paquetes | **Pendiente** (requiere ROS 2 Humble) |
 | `ros2 launch robot_bringup bringup.launch.py leg:=right/left` | **Pendiente** (requiere ROS 2 Humble) |
 | Comparación de `ros2 node list`/`topic list` antes y después | **Pendiente** (requiere ROS 2 Humble) |
-| Pruebas con el robot físico (paro de emergencia, servos) | **Pendiente** (requiere hardware) |
+
 
 
 ## 7. Anexo: resumen de archivos
