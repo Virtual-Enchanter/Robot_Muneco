@@ -39,8 +39,8 @@ robot_description
 
 robot_kinematics
   Nodo kinematics_node: recibe /robot/command y publica /robot/joint_targets.
-  Usa kinem_leg_gen.py para calcular la cinemática directa (forward kinematics)
-  con parámetros DH. Hoy reenvía; aquí va luego la cinemática inversa,
+  Hoy reenvía la consigna tal cual; la cinemática directa (DH) que usa
+  teleop vive en cinematica_directa_der_izq.py. Aquí va luego la cinemática inversa,
   trayectorias y coordinación de patas.
 
 robot_control
@@ -96,8 +96,10 @@ robot_bringup
   antes -- robot_state_publisher, kinematics_node, control_node, sim_bridge,
   teleop_node (con sus sliders/textbox) y rviz2 -- pero apuntando solo al
   URDF y joint_names de esa pata.
-    launch/bringup_der.launch.py -> pata_der.urdf.xacro, joints Right_*.
-    launch/bringup_izq.launch.py -> pata_izq.urdf.xacro, joints Left_*.
+    launch/bringup.launch.py leg:=right -> joints Right_*.
+    launch/bringup.launch.py leg:=left  -> joints Left_*.
+  Ambas patas cargan el muñeco completo (muneco_bipedo.urdf.xacro); el
+  argumento "leg" solo decide qué joints controla cada instancia.
   Los límites articulares (interno y visual) NO se pasan desde acá: eso es
   tarea de cada nodo (control_node.py / teleop_node.py), ver esas secciones
   más arriba. bringup solo decide qué joints existen en cada pata.
@@ -179,8 +181,8 @@ Paso 1 - Compilar (una sola vez por terminal nueva):
 
 Paso 2 - Encender una pata (incluye los sliders). Elegí UNA terminal por
 pata (no las dos a la vez, ver nota de robot_bringup más arriba):
-    ros2 launch robot_bringup bringup_der.launch.py     # pierna derecha
-    ros2 launch robot_bringup bringup_izq.launch.py     # pierna izquierda
+    ros2 launch robot_bringup bringup.launch.py leg:=right   # pierna derecha
+    ros2 launch robot_bringup bringup.launch.py leg:=left    # pierna izquierda
   Debe salir "process started with pid" para los 5 nodos (description,
   kinematics, control, sim, teleop) y cada uno "listo". Se abre la ventana
   de sliders + textbox (teleop_node) y RViz con la pata elegida. En un
@@ -234,8 +236,9 @@ que ros2 topic echo /joint_states trae position con datos.
 - num_joints es parámetro: 3 para una pata. Cuando exista un URDF combinado
   de las dos patas (torso/pelvis común) esto sube a 6; hoy no existe ese
   URDF combinado, cada pata es un modelo independiente.
-- kinem_leg_gen.py implementa la cinemática directa con Denavit-Hartenberg.
-  Funciones: forward_kinematics(q1, q2, q3) y end_effector_position(q1, q2, q3).
+- cinematica_directa_der_izq.py implementa la cinemática directa con
+  Denavit-Hartenberg. Funciones: forward_kinematics_right(q),
+  forward_kinematics_left(q), forward_kinematics_biped(q_right, q_left) y get_position(T).
 - Cada URDF real (SolidWorks) se incluye vía un wrapper xacro
   (pata_der.urdf.xacro / pata_izq.urdf.xacro) para compatibilidad con ROS2 y
   para agregar el frame "world" que usa RViz como Fixed Frame.

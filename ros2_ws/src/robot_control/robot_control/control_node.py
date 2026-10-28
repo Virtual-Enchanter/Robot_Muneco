@@ -51,7 +51,7 @@ class ControlNode(Node):
         # (Right_Hip_Roll/Pitch + Right_Knee, ver
         # robot_description/urdf/urdf_der).
         #
-        # bringup_izq.launch.py sobreescribe esto con los
+        # bringup.launch.py sobreescribe esto con los
         # joints Left_* al lanzar la pata izquierda.
 
         self.declare_parameter(
