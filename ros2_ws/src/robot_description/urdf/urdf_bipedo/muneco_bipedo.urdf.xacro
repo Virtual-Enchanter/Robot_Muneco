@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot name="muneco_bipedo" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!--
+    Wrapper xacro para el muneco bipedo completo (Muneco_Bipedo_URDF_V3).
+    El CAD fue exportado con "arriba" = +Y del Base_link y las piernas
+    separadas sobre Z. Rotamos +90 grados en X para dejar Z hacia arriba
+    (convencion REP-103) y subimos la base 0.403 m para que los pies
+    toquen el suelo en la posicion cero.
+  -->
+  <link name="world" />
+  <joint name="world_to_base" type="fixed">
+    <parent link="world" />
+    <child link="Base_link" />
+    <origin xyz="0 0 0.403" rpy="1.57079632679 0 0" />
+  </joint>
+
+  <xacro:include filename="$(find robot_description)/urdf/urdf_bipedo/Muneco_Bipedo_URDF_V3.urdf" />
+</robot>
