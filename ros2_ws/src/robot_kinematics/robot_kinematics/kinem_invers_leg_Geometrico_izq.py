@@ -9,13 +9,11 @@ fantasma ni L6. Pata IZQUIERDA.
 import numpy as np
 
 from robot_kinematics.cinematica_directa_der_izq import L1, L2, L3, L4, L5
+from robot_kinematics.kinem_common import (
+    joint_limit_warnings,
+)
 
 x, y, z = L2 + L3 + L4 + L5, 0.0, -L1   # objetivo de prueba (q1=q2=q3=0)
-
-# Límites articulares [°]
-q1_min, q1_max = 0, 90
-q2_min, q2_max = -90, 90
-q3_min, q3_max = -90, 90
 
 
 def cinematica_inversa_pata_geom(x, y, z, L1, L2, L3, L4, L5, codo="arriba"):
@@ -62,16 +60,6 @@ def cinematica_inversa_pata_geom(x, y, z, L1, L2, L3, L4, L5, codo="arriba"):
     q2 = np.arctan2(s2, c2)
 
     return q1, q2, q3, True
-
-
-def joint_limit_warnings(q1_deg, q2_deg, q3_deg, tol=1e-6):
-    warnings = []
-    for nombre, v, mn, mx in (("q1", q1_deg, q1_min, q1_max),
-                              ("q2", q2_deg, q2_min, q2_max),
-                              ("q3", q3_deg, q3_min, q3_max)):
-        if not (mn - tol) <= v <= (mx + tol):
-            warnings.append(f"{nombre} fuera de rango [{mn}°, {mx}°]")
-    return warnings
 
 
 if __name__ == "__main__":

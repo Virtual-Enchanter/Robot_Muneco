@@ -11,7 +11,7 @@ Inicia:
     1. robot_state_publisher  (modelo completo del muñeco)
     2. joint_state_publisher  (completa los joints de la otra pierna en 0)
     3. kinematics_node        (reenvía /robot/command -> /robot/joint_targets)
-    4. ik_node, ik_newton_node, ik_des_node, ik_geom_node, ik_grad_node
+    4. ik_node                (los 5 métodos de cinemática inversa)
     5. control_node           (aplica límites y publica el estado)
     6. sim_bridge             (puente hacia la simulación)
     7. teleop_node            (sliders + cinemática directa de la pierna)
@@ -21,8 +21,8 @@ IMPORTANTE:
     Correr una sola pierna a la vez. Ambas usan los mismos nombres de
     nodos y tópicos, así que NO deben ejecutarse en paralelo sin namespaces.
 
-El puente serial con la ESP32 (robot_serial_bridge) no se inicia desde
-este launch.
+La ESP32 (firmware esp32_servos) se comunica por micro-ROS con su propio
+micro-ROS agent; no se inicia desde este launch.
 """
 
 from ament_index_python.packages import get_package_share_directory
@@ -63,16 +63,6 @@ LEG_JOINTS = {
 # ======================================================================
 # NODOS
 # ======================================================================
-
-def ik_node(executable, leg):
-    """Nodo de cinemática inversa de un método concreto."""
-    return Node(
-        package='robot_kinematics',
-        executable=executable,
-        name=executable,
-        parameters=[{'leg_side': leg}],
-    )
-
 
 def launch_setup(context, *args, **kwargs):
     leg = LaunchConfiguration('leg').perform(context)
@@ -121,15 +111,12 @@ def launch_setup(context, *args, **kwargs):
         parameters=[{'num_joints': num_joints}],
     )
 
-    ik_nodes = [
-        ik_node(executable, leg) for executable in (
-            'ik_node',
-            'ik_newton_node',
-            'ik_des_node',
-            'ik_geom_node',
-            'ik_grad_node',
-        )
-    ]
+    ik = Node(
+        package='robot_kinematics',
+        executable='ik_node',
+        name='ik_node',
+        parameters=[{'leg_side': leg}],
+    )
 
     # Los límites articulares viven en control_node.py, no se pasan aquí.
     control = Node(
@@ -174,7 +161,7 @@ def launch_setup(context, *args, **kwargs):
         description,
         joints_muneco,
         kinematics,
-        *ik_nodes,
+        ik,
         control,
         sim,
         teleop,

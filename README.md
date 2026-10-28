@@ -11,36 +11,30 @@ Este repositorio concentra los recursos de programación y desarrollo necesarios
 ## 📁 Estructura del repositorio
 
 ```text
-Robot_bipedoCode/
+Bipedo_Mu-eco/
 │
 ├── README.md
 ├── .gitignore
 ├── Robot_bipedoCode.code-workspace
 │
+├── firmware/
+│   └── esp32_servos/          # Firmware ESP32 (PlatformIO + micro-ROS)
+│
 ├── ros2_ws/
 │   └── src/
+│       ├── ARCHITECTURE.md
+│       ├── robot_bringup/
+│       ├── robot_control/
 │       ├── robot_description/
 │       ├── robot_interfaces/
 │       ├── robot_kinematics/
-│       ├── robot_control/
 │       ├── robot_simulation/
 │       └── robot_teleop/
 │
-├── matlab/
-│   ├── cinematica/
-│   ├── control/
-│   ├── dinamica/
-│   └── simulaciones/
-│
-├── scripts/
-│
-├── tests/
-│
-└── docs/
-    ├── arquitectura/
-    ├── cinematica/
-    ├── control/
-    └── simulacion/
+├── matlab/                    # Reservado (aún sin contenido)
+├── scripts/                   # Reservado (aún sin contenido)
+├── tests/                     # Reservado (aún sin contenido)
+└── docs/                      # Documentos PDF del proyecto
 ```
 
 > La estructura puede evolucionar durante el desarrollo. Los paquetes y directorios se crearán o modificarán conforme aparezcan nuevas necesidades del proyecto.
@@ -63,6 +57,19 @@ Contendrá la descripción del robot:
 - Mallas 3D.
 - Configuración para RViz.
 - Archivos de lanzamiento relacionados con la descripción del robot.
+
+### `robot_bringup`
+
+Lanza una pierna completa con un solo comando:
+
+```bash
+ros2 launch robot_bringup bringup.launch.py leg:=right
+ros2 launch robot_bringup bringup.launch.py leg:=left
+```
+
+Arranca el modelo, la cinemática, el control, el puente de simulación, la
+interfaz de teleoperación y RViz. Ver `ros2_ws/src/ARCHITECTURE.md` para los
+tópicos y los pasos de prueba.
 
 ### `robot_interfaces`
 

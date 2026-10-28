@@ -34,6 +34,14 @@ cambiada de signo.
 """
 
 import numpy as np
+from robot_kinematics.kinem_common import (
+    L1,
+    L2,
+    L3,
+    L4,
+    L5,
+    dh_matrix,
+)
 
 
 # ----------------------------------------------------------------------
@@ -59,41 +67,6 @@ import numpy as np
 # q1 = 0 el modelo coincide exactamente con el URDF, y con q1 != 0
 # hay una pequeña diferencia de posición.
 
-L1 = 90.3
-L2 = 48.5
-L3 = 54.2
-L4 = 138.5
-L5 = 162.0
-
-
-# ----------------------------------------------------------------------
-# Matriz de transformación DH
-# ----------------------------------------------------------------------
-
-def dh_matrix(theta, d, a, alpha):
-    """
-    Calcula la matriz homogénea 4x4
-    utilizando la convención DH estándar.
-
-    Parámetros:
-        theta : ángulo articular [rad]
-        d     : desplazamiento [mm]
-        a     : longitud del eslabón [mm]
-        alpha : ángulo de torsión [rad]
-    """
-
-    ct = np.cos(theta)
-    st = np.sin(theta)
-
-    ca = np.cos(alpha)
-    sa = np.sin(alpha)
-
-    return np.array([
-        [ct, -st * ca,  st * sa, a * ct],
-        [st,  ct * ca, -ct * sa, a * st],
-        [0,        sa,       ca,      d],
-        [0,         0,        0,      1]
-    ])
 
 
 # ----------------------------------------------------------------------
