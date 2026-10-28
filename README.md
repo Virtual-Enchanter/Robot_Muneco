@@ -162,7 +162,11 @@ Robot_Muneco/
 ├── firmware/                 ESP32 (servos) y control_pata sin ROS
 ├── scripts/                  launch_gazebo_muneco.sh
 ├── docs/                     arquitectura y justificación del entregable
-├── matlab/  tests/
+├── matlab/                   análisis matemático (vacía por ahora)
+├── tests/                    pruebas generales (vacía por ahora)
+├── .gitignore
+├── Robot_bipedoCode.code-workspace
+└── README.md
 ```
 
 No se suben `ros2_ws/build/`, `ros2_ws/install/` ni `ros2_ws/log/` (ver `.gitignore`).
