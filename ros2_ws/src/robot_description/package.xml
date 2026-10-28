@@ -3,7 +3,7 @@
 <package format="3">
   <name>robot_description</name>
   <version>0.0.0</version>
-  <description>Descripcion URDF/Xacro del robot bipedo (pata de 3 DOF).</description>
+  <description>Descripcion URDF del muneco bipedo (2 piernas x 3 DOF) con ros2_control para Gazebo.</description>
   <maintainer email="david.collazos_her@uao.edu.co">david</maintainer>
   <license>Apache-2.0</license>
 
@@ -12,7 +12,7 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
   <exec_depend>rviz2</exec_depend>
-  <exec_depend>gazebo_ros</exec_depend>
+  <!-- el bloque <gazebo> del URDF usa $(find robot_simulation)/config/controllers.yaml -->
 
   <export>
     <build_type>ament_python</build_type>

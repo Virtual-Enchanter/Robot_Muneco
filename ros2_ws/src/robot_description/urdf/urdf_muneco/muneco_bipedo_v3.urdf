@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="Muñeco_Bipedo_Super_Final_URDFV3">
+  <link
+    name="Base_link">
+    <inertial>
+      <origin
+        xyz="-0.0045845 -0.0003478 0.0031248"
+        rpy="0 0 0" />
+      <mass
+        value="0.7848" />
+      <inertia
+        ixx="0.0019084"
+        ixy="-4.4944E-06"
+        ixz="5.1367E-05"
+        iyy="0.0013538"
+        iyz="6.328E-06"
+        izz="0.0024891" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="Right_Hip_Roll_Link">
+    <inertial>
+      <origin
+        xyz="-0.04052 0.031177 -0.02354"
+        rpy="0 0 0" />
+      <mass
+        value="0.074301" />
+      <inertia
+        ixx="4.7356E-05"
+        ixy="1.8753E-05"
+        ixz="-1.372E-06"
+        iyy="4.9191E-05"
+        iyz="-4.795E-09"
+        izz="5.9302E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Hip_Roll_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Hip_Roll_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Right_Hip_Roll_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.026593 -0.06644 -0.036996"
+      rpy="-1.5708 -0.90017 1.5708" />
+    <parent
+      link="Base_link" />
+    <child
+      link="Right_Hip_Roll_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-0.13963"
+      upper="1.5708"
+      effort="4.51"
+      velocity="8.06" />
+  </joint>
+  <link
+    name="Right_Hip_Pitch_Link">
+    <inertial>
+      <origin
+        xyz="-0.088426 -0.0021914 -0.030296"
+        rpy="0 0 0" />
+      <mass
+        value="0.12441" />
+      <inertia
+        ixx="7.9104E-05"
+        ixy="-9.5305E-06"
+        ixz="-1.7639E-05"
+        iyy="0.00026151"
+        iyz="-4.4445E-07"
+        izz="0.00020304" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Hip_Pitch_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Hip_Pitch_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Right_Hip_Pitch_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.062711 0.0071933 -0.02125"
+      rpy="1.5708 0 -0.67063" />
+    <parent
+      link="Right_Hip_Roll_Link" />
+    <child
+      link="Right_Hip_Pitch_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="4.41"
+      velocity="6.16" />
+  </joint>
+  <link
+    name="Right_Knee_Link">
+    <inertial>
+      <origin
+        xyz="-0.11273 -0.018024 -0.033891"
+        rpy="0 0 0" />
+      <mass
+        value="0.31221" />
+      <inertia
+        ixx="0.00035204"
+        ixy="-1.647E-05"
+        ixz="-1.2402E-05"
+        iyy="0.00033907"
+        iyz="-4.1876E-07"
+        izz="0.00043561" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Knee_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Right_Knee_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Right_Knee_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.13855 -0.001 0.0002"
+      rpy="0 0 0" />
+    <parent
+      link="Right_Hip_Pitch_Link" />
+    <child
+      link="Right_Knee_Link" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="4.41"
+      velocity="6.16" />
+  </joint>
+  <link
+    name="Left_Hip_Roll_Link">
+    <inertial>
+      <origin
+        xyz="-0.04052 -0.031177 -0.023538"
+        rpy="0 0 0" />
+      <mass
+        value="0.074301" />
+      <inertia
+        ixx="4.7359E-05"
+        ixy="-1.8754E-05"
+        ixz="-1.372E-06"
+        iyy="4.9187E-05"
+        iyz="4.8309E-09"
+        izz="5.9303E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Hip_Roll_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Hip_Roll_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Left_Hip_Roll_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.026593 0.06677 -0.036753"
+      rpy="1.5708 -0.90017 -1.5708" />
+    <parent
+      link="Base_link" />
+    <child
+      link="Left_Hip_Roll_Link" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-0.13963"
+      upper="1.5708"
+      effort="4.51"
+      velocity="8.06" />
+  </joint>
+  <link
+    name="Left_Hip_Pitch_Link">
+    <inertial>
+      <origin
+        xyz="-0.088426 0.0021898 -0.030546"
+        rpy="0 0 0" />
+      <mass
+        value="0.12441" />
+      <inertia
+        ixx="7.9104E-05"
+        ixy="9.527E-06"
+        ixz="-1.7639E-05"
+        iyy="0.0002615"
+        iyz="4.4441E-07"
+        izz="0.00020304" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Hip_Pitch_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Hip_Pitch_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Left_Hip_Pitch_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.062866 -0.0069971 -0.02125"
+      rpy="-1.5708 0 0.67063" />
+    <parent
+      link="Left_Hip_Roll_Link" />
+    <child
+      link="Left_Hip_Pitch_Link" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="4.41"
+      velocity="6.16" />
+  </joint>
+  <link
+    name="Left_Knee_Link">
+    <inertial>
+      <origin
+        xyz="-0.11237 0.01786 -0.033876"
+        rpy="0 0 0" />
+      <mass
+        value="0.31532" />
+      <inertia
+        ixx="0.00035366"
+        ixy="1.6549E-05"
+        ixz="-1.2609E-05"
+        iyy="0.00034449"
+        iyz="2.8467E-07"
+        izz="0.00043988" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Knee_Link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89412 0.89412 0.89412 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://robot_description/meshes/meshes_muneco/Left_Knee_Link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="Left_Knee_Joint"
+    type="revolute">
+    <origin
+      xyz="-0.13855 0.001 -5.0359E-05"
+      rpy="0 0 0" />
+    <parent
+      link="Left_Hip_Pitch_Link" />
+    <child
+      link="Left_Knee_Link" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="4.41"
+      velocity="6.16" />
+  </joint>
+
+  <!-- ROS2 Control Block 
+  Everything below this is new-->
+  <ros2_control name="MunecoSystem" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+
+    <joint name="Right_Hip_Roll_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="Right_Hip_Pitch_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="Right_Knee_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="Left_Hip_Roll_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="Left_Hip_Pitch_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="Left_Knee_Joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+  <!-- Gazebo Block -->
+  <!-- controllers.yaml vive en robot_simulation: con controller_manager de
+       Jazzy, una ruta que contiene "robot_description" se descarta al pasar
+       los parametros a los controladores y estos no cargan. -->
+  <gazebo>
+    <plugin
+      filename="libgz_ros2_control-system.so"
+      name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find robot_simulation)/config/controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+</robot>

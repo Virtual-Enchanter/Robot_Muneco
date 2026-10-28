@@ -7,7 +7,7 @@ package_name = 'robot_description'
 
 def data_files_preserving_tree(pattern):
     """Glob recursively and group files by their own directory, so
-    subcarpetas como urdf/urdf_der o meshes/meshes_izq se instalan
+    subcarpetas como urdf/urdf_muneco o meshes/meshes_muneco se instalan
     conservando su estructura (necesaria para package://<pkg>/... )."""
     grouped = {}
     for path in glob(pattern, recursive=True):
@@ -36,7 +36,7 @@ setup(
     zip_safe=True,
     maintainer='david',
     maintainer_email='david.collazos_her@uao.edu.co',
-    description='Descripcion URDF del robot bipedo (pata de 3 DOF)',
+    description='Descripcion URDF del muneco bipedo con ros2_control',
     license='Apache-2.0',
     tests_require=['pytest'],
     entry_points={},
