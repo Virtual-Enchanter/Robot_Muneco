@@ -190,7 +190,7 @@ o pruebas con el robot físico:
 | Búsqueda de referencias a archivos eliminados | Hecha, sin referencias restantes |
 | `colcon build` de los paquetes | Hecha, sin errores |
 | `ros2 launch robot_bringup bringup.launch.py leg:=right/left` | Hecha, sin errores |
-| Comparación de `ros2 node list`/`topic list` antes y después | Hecha, sin errores |
+| Comparación de `ros2 node list`/`topic list` antes y después | Hecha, cambios efectuados |
 
 
 
