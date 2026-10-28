@@ -24,7 +24,9 @@ Robot_bipedoCode/
 │       ├── robot_kinematics/
 │       ├── robot_control/
 │       ├── robot_simulation/
-│       └── robot_teleop/
+│       ├── robot_teleop/
+│       ├── robot_serial_bridge/
+│       └── robot_bringup/
 │
 ├── matlab/
 │   ├── cinematica/
@@ -121,6 +123,16 @@ Contendrá los sistemas relacionados con la interacción del operador:
 - Selección de modos de funcionamiento.
 - Visualización del estado del robot.
 - Mecanismos de parada desde software.
+
+### `robot_serial_bridge`
+
+Puente serie entre ROS 2 y la ESP32 de los servos del muñeco.
+
+### `robot_bringup`
+
+Archivos de lanzamiento de la arquitectura completa: `bringup_pierna.launch.py leg:=izq|der` (RViz) y `bringup_muneco.launch.py` (Gazebo).
+
+> El detalle de nodos y tópicos está en `ros2_ws/src/ARCHITECTURE.md`; la justificación de la optimización del corte 3 está en `docs/arquitectura/OPTIMIZACION_ARQUITECTURA.md`. Para abrir el muñeco en Gazebo: `./scripts/launch_gazebo_muneco.sh`.
 
 ---
 
