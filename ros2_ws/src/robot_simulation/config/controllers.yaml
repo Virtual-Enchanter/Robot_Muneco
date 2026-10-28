@@ -1,0 +1,27 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    joint_group_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+joint_state_broadcaster:
+  ros__parameters:
+    use_sim_time: true
+
+joint_group_position_controller:
+  ros__parameters:
+    use_sim_time: true
+    joints:
+      - Right_Hip_Roll_Joint
+      - Right_Hip_Pitch_Joint
+      - Right_Knee_Joint
+      - Left_Hip_Roll_Joint
+      - Left_Hip_Pitch_Joint
+      - Left_Knee_Joint
+
+    interface_name: position
