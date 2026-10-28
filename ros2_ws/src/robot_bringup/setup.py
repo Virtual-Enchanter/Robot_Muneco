@@ -21,9 +21,5 @@ setup(
     description='Orquestador (bringup) de la arquitectura del robot bipedo',
     license='Apache-2.0',
     tests_require=['pytest'],
-    entry_points={
-        'console_scripts': [
-            'test_injector = robot_bringup.test_injector_node:main',
-        ],
-    },
+    entry_points={},
 )
