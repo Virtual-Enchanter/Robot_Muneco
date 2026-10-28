@@ -4,11 +4,6 @@
 - Hean Felipe Gómez Gonzalias — 2230669
 - Santiago Sarria Arcila — 2215465
 
-**Fecha:** 28 de octubre de 2026
-**Rama:** `refactor/auditoria-arquitectura`
-**Commits:** `e37a987` (launches y código sin uso) y `2d7e3c8` (nodos IK, firmware, documentación)
-
-
 
 ---
 
