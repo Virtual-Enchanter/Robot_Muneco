@@ -8,7 +8,7 @@
 **Rama:** `refactor/auditoria-arquitectura`
 **Commits:** `e37a987` (launches y código sin uso) y `2d7e3c8` (nodos IK, firmware, documentación)
 
-Written for: equipo del proyecto y docentes que revisan el avance del desarrollo.
+
 
 ---
 
@@ -28,8 +28,6 @@ Resultados principales:
 - Se verificó numéricamente que la cinemática no cambió (resultados idénticos antes y después).
 - Se reescribió la documentación de arquitectura para que coincida con el código.
 
-Quedaron pendientes dos puntos que requieren decisión y pruebas con el robot
-físico: el paro de emergencia y el manejo de dependencias.
 
 ## 2. Alcance y metodología
 
