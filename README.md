@@ -162,8 +162,8 @@ Robot_Muneco/
 ├── firmware/                 ESP32 (servos) y control_pata sin ROS
 ├── scripts/                  launch_gazebo_muneco.sh
 ├── docs/                     arquitectura y justificación del entregable
-├── matlab/                   análisis matemático (vacía por ahora)
-├── tests/                    pruebas generales (vacía por ahora)
+├── matlab/                   modelos y análisis en MATLAB
+├── tests/                    pruebas generales del proyecto
 ├── .gitignore
 ├── Robot_bipedoCode.code-workspace
 └── README.md
