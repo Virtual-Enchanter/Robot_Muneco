@@ -31,3 +31,15 @@ class PIDController:
                 val = -self.limit
             out[i] = val
         return out
+
+
+# Antes en motor_control.py (archivo de 6 líneas que solo usaba
+# control_node junto al PID); se integra aquí para no tener un módulo
+# aparte por una sola suma.
+class MotorController:
+    def __init__(self, num_joints):
+        self.n = num_joints
+
+    # apply suma consigna + corrección y entrega el comando por junta.
+    def apply(self, targets, corrections):
+        return [targets[i] + corrections[i] for i in range(self.n)]

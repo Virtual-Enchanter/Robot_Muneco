@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='david',
     maintainer_email='david.collazos_her@uao.edu.co',
-    description='TODO: Package description',
+    description='Control articular del muneco bipedo: limites, PID e inversion de rodilla',
     license='TODO: License declaration',
     extras_require={
         'test': [

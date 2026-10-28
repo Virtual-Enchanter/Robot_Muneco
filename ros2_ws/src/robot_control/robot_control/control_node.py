@@ -20,14 +20,16 @@
 # ============================================================
 
 
+import math
+
+from rcl_interfaces.msg import SetParametersResult
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-
-from std_msgs.msg import Bool
-
-from robot_interfaces.msg import JointTarget, JointState
-
+from robot_control.pid_controllers import MotorController, PIDController
+from robot_interfaces.msg import JointState, JointTarget
 from sensor_msgs.msg import JointState as SensorJointState
+from std_msgs.msg import Bool
 
 
 class ControlNode(Node):
@@ -88,7 +90,8 @@ class ControlNode(Node):
         #   ros2 param set /control_node joint_limits_lower [...]
         #   ros2 param set /control_node joint_limits_upper [...]
         #
-        # Se relee cada ciclo.
+        # Se aplica al instante (callback de parametros) y se
+        # rechaza una lista con tamaño distinto a num_joints.
         #
         # cadera-roll (indice 0) hoy NO es el limite nominal
         # del URDF (-0.34907 rad / -20 grados):
@@ -139,25 +142,48 @@ class ControlNode(Node):
         # LECTURA INICIAL DE PARÁMETROS
         # ====================================================
 
-        self.n = self.get_parameter(
+        self.n = int(self.get_parameter(
             'num_joints'
-        ).value
+        ).value)
 
-        self.joint_names = self.get_parameter(
+        self.joint_names = list(self.get_parameter(
             'joint_names'
-        ).value
+        ).value)
 
-        self.lower = self.get_parameter(
+        self.lower = list(self.get_parameter(
             'joint_limits_lower'
-        ).value
+        ).value)
 
-        self.upper = self.get_parameter(
+        self.upper = list(self.get_parameter(
             'joint_limits_upper'
-        ).value
+        ).value)
 
-        self.verify_mode = self.get_parameter(
+        self.verify_mode = bool(self.get_parameter(
             'verify_mode'
-        ).value
+        ).value)
+
+
+        # ====================================================
+        # CACHE DE PARAMETROS
+        # ====================================================
+        #
+        # Antes control_loop() releía 3 parámetros en cada
+        # ciclo (150 llamadas/s a 50 Hz). Ahora se leen una vez
+        # y se actualizan solo cuando alguien hace
+        # "ros2 param set".
+        #
+        # ====================================================
+
+        self.add_on_set_parameters_callback(
+            self.on_set_parameters
+        )
+
+        # Control PID (solo verify_mode=False). Se crea al
+        # primer uso y se reinicia al volver a verificación.
+
+        self.pid = None
+        self.motor = None
+        self.estimated = [0.0] * self.n
 
 
         # ====================================================
@@ -260,6 +286,53 @@ class ControlNode(Node):
 
 
     # ========================================================
+    # VALIDACIÓN DE PARÁMETROS EN VIVO
+    # ========================================================
+
+    def on_set_parameters(self, params):
+
+        lower = self.lower
+        upper = self.upper
+        verify_mode = self.verify_mode
+
+        for p in params:
+
+            if p.name in ('joint_limits_lower', 'joint_limits_upper'):
+
+                valores = [float(v) for v in p.value]
+
+                if len(valores) != self.n:
+                    return SetParametersResult(
+                        successful=False,
+                        reason=f'{p.name} debe tener {self.n} valores'
+                    )
+
+                if not all(math.isfinite(v) for v in valores):
+                    return SetParametersResult(
+                        successful=False,
+                        reason=f'{p.name} tiene valores no finitos'
+                    )
+
+                if p.name == 'joint_limits_lower':
+                    lower = valores
+                else:
+                    upper = valores
+
+            elif p.name == 'verify_mode':
+                verify_mode = bool(p.value)
+
+        self.lower = lower
+        self.upper = upper
+
+        if verify_mode and not self.verify_mode:
+            self.pid = None
+
+        self.verify_mode = verify_mode
+
+        return SetParametersResult(successful=True)
+
+
+    # ========================================================
     # RECEPCIÓN DE CONSIGNA
     # ========================================================
 
@@ -301,21 +374,9 @@ class ControlNode(Node):
     def control_loop(self):
 
         # ----------------------------------------------------
-        # Leer limites y modo cada ciclo para que sean
-        # dinamicos.
+        # Limites y modo: vienen del cache (on_set_parameters),
+        # ya no se releen en cada ciclo.
         # ----------------------------------------------------
-
-        self.lower = self.get_parameter(
-            'joint_limits_lower'
-        ).value
-
-        self.upper = self.get_parameter(
-            'joint_limits_upper'
-        ).value
-
-        self.verify_mode = self.get_parameter(
-            'verify_mode'
-        ).value
 
 
         # ====================================================
@@ -419,19 +480,7 @@ class ControlNode(Node):
                 # o trayectorias mas adelante).
                 # ------------------------------------------------
 
-                from robot_control.pid_controllers import (
-                    PIDController
-                )
-
-                from robot_control.motor_control import (
-                    MotorController
-                )
-
-
-                if not hasattr(
-                    self,
-                    'pid'
-                ):
+                if self.pid is None:
 
                     self.pid = PIDController(
                         self.n
@@ -474,9 +523,9 @@ class ControlNode(Node):
                     )
 
 
-                state.position = self.estimated
+                state.position = list(self.estimated)
 
-                state.effort = command
+                state.effort = list(command)
 
 
         else:
@@ -695,7 +744,7 @@ def main(args=None):
             node
         )
 
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
 
         pass
 
@@ -703,7 +752,8 @@ def main(args=None):
 
         node.destroy_node()
 
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 # ============================================================
