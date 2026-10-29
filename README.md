@@ -71,6 +71,7 @@ Medido con la arquitectura en ejecución (una pierna, sin RViz).
 - **`launch/gazebo_muneco.launch.py`:** abre Gazebo, hace el spawn y carga los controladores **en cadena por eventos**, sin esperas fijas de 8 y 10 s. Funciona en Fortress (Humble) y Harmonic (Jazzy).
 - **`config/controllers.yaml`:** `joint_group_position_controller` con las 6 articulaciones. Se movió aquí porque en Jazzy una ruta que contiene `robot_description` hace que los controladores no carguen.
 - **`sim_bridge` corregido:** enviaba 3 valores a un controlador de 6 joints y Gazebo los descartaba. Ahora ubica cada valor por nombre de joint.
+- **Reinicio del robot:** servicio `/sim/reset_robot` en `sim_bridge` y botón **⟲ Reiniciar robot** en la interfaz. Lleva las 6 articulaciones a 0, espera a que queden quietas y devuelve el modelo a la pose del spawn con `set_pose` de Gazebo (funciona en Fortress y Harmonic).
 
 ### `robot_control`
 - **Parámetros:** se leen una vez y se validan con `ros2 param set`. Antes el bucle de 50 Hz hacía 150 lecturas por segundo.
@@ -135,6 +136,8 @@ ros2 topic pub --once /robot/command robot_interfaces/msg/RobotCommand \
   "{mode: 0, position: [0.3, 0.4, 0.5], velocity: [0.0, 0.0, 0.0]}"
 ros2 topic echo /joint_states   # Left: 0.3, 0.4, -0.5 (rodilla invertida)
 ```
+
+Si el muñeco se cae en Gazebo, el botón **⟲ Reiniciar robot** de la interfaz (debajo de los sliders) pone las articulaciones en 0° y lo vuelve a poner de pie en la pose inicial.
 
 Paro de emergencia: `ros2 topic pub --once /robot/e_stop std_msgs/msg/Bool "{data: true}"`
 

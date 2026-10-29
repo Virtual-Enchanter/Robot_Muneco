@@ -89,9 +89,14 @@ robot_simulation
   - Nodo sim_bridge: /robot/joint_commands (3 joints de la pierna) -> vector
     de 6 en /joint_group_position_controller/commands; la otra pierna
     conserva su último valor.
+    Servicio /sim/reset_robot (std_srvs/Trigger): las 6 articulaciones a 0,
+    espera a que queden quietas y devuelve el modelo a la pose del spawn
+    (set_pose de Gazebo con 'gz' en Harmonic o 'ign' en Fortress).
 
 robot_teleop
   Nodo teleop_node: sliders + textbox, cinemática directa, pestañas de IK.
+  Botón "Reiniciar robot": sliders a 0° y llama /sim/reset_robot para
+  poner el muñeco de pie otra vez si se cae en Gazebo.
   Hardware: publica /servo_commands directo a la ESP32 (micro-ROS) con
   6 valores [IZQ roll, pitch, knee, DER roll, pitch, knee]; la pierna que no
   controla va como NaN para que el firmware no la mueva.
@@ -123,7 +128,8 @@ teleop_node --/servo_commands (6 valores)--> ESP32 (micro-ROS) --/servo_states--
 
 Con Gazebo (bringup_muneco):
 control_node --/robot/joint_commands--> sim_bridge --/joint_group_position_controller/commands--> Gazebo
-Gazebo (joint_state_broadcaster) --/joint_states--> robot_state_publisher
+Gazebo (joint_state_broadcaster) --/joint_states--> robot_state_publisher, sim_bridge
+teleop_node --/sim/reset_robot (servicio)--> sim_bridge --set_pose--> Gazebo
 (el /joint_states de control_node se renombra a /control/joint_states)
 
 cualquiera --/robot/e_stop (Bool)--> control_node (frena)

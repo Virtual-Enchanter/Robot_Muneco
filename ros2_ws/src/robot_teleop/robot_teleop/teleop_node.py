@@ -15,6 +15,9 @@
 #      desacople, geométrico y gradiente descendente) a través
 #      de los nodos ik_*_node, y verificar cada resultado con
 #      el método MTH.
+#   9. Reiniciar el robot en Gazebo (botón "Reiniciar robot"):
+#      articulaciones a 0° y el muñeco otra vez de pie en la
+#      pose inicial (servicio /sim/reset_robot de sim_bridge).
 #
 # La misma GUI se utiliza para ambas piernas.
 #
@@ -43,6 +46,7 @@ from robot_interfaces.msg import (
     RobotCommand, JointState, IKResult, IKJacobTarget
 )
 from std_msgs.msg import Float32MultiArray
+from std_srvs.srv import Trigger
 from geometry_msgs.msg import Point
 
 import tkinter as tk
@@ -282,6 +286,24 @@ class TeleopNode(Node):
             self.on_state,
             10
         )
+
+
+        # ====================================================
+        # REINICIO DEL ROBOT EN GAZEBO
+        #
+        # sim_bridge ofrece /sim/reset_robot: articulaciones a
+        # home y el modelo de vuelta a la pose inicial (de pie).
+        # La respuesta llega en el hilo de ROS; el mensaje se
+        # guarda en pending_reset_status y se muestra en
+        # refresh() (hilo de Tkinter).
+        # ====================================================
+
+        self.reset_client = self.create_client(
+            Trigger,
+            '/sim/reset_robot'
+        )
+
+        self.pending_reset_status = None
 
 
         # ====================================================
@@ -578,6 +600,29 @@ class TeleopNode(Node):
             self.slider_labels.append(
                 value_label
             )
+
+
+        # ----------------------------------------------------
+        # BOTÓN REINICIAR ROBOT (Gazebo)
+        #
+        # Si el muñeco se cae en la simulación, lo vuelve a
+        # poner de pie en la pose inicial con las articulaciones
+        # en 0°.
+        # ----------------------------------------------------
+
+        reset_button = tk.Button(
+            joints_frame,
+            text="⟲ Reiniciar robot",
+            bg='#ffdddd',
+            command=self.reset_robot
+        )
+
+        reset_button.grid(
+            row=self.num_joints,
+            column=0,
+            columnspan=3,
+            pady=(6, 2)
+        )
 
 
         # ====================================================
@@ -1074,6 +1119,112 @@ class TeleopNode(Node):
             text=message,
             foreground=color
         )
+
+
+    # ========================================================
+    # REINICIAR ROBOT (botón de la sección de articulaciones)
+    # ========================================================
+
+    def reset_robot(self):
+
+        # ----------------------------------------------------
+        # 1. Sliders, entradas y objetivo en home (0°).
+        #    Se publica para que control_node también vuelva a
+        #    0 y no reenvíe el objetivo anterior a Gazebo.
+        # ----------------------------------------------------
+
+        self.target_deg = [
+            0.0
+        ] * self.num_joints
+
+        for i in range(self.num_joints):
+
+            self.sliders[i].set(
+                0.0
+            )
+
+            self.slider_labels[i].config(
+                text="0.0°"
+            )
+
+            self.entries[i].delete(
+                0,
+                tk.END
+            )
+
+            self.entries[i].insert(
+                0,
+                "0.0"
+            )
+
+        self.publish_target()
+
+        self.update_kinematics()
+
+
+        # ----------------------------------------------------
+        # 2. Pedimos a sim_bridge que devuelva el modelo a la
+        #    pose inicial. La llamada es asíncrona para no
+        #    congelar la interfaz.
+        # ----------------------------------------------------
+
+        if not self.reset_client.service_is_ready():
+
+            self.set_status(
+                "Articulaciones en 0°. Gazebo no está abierto "
+                "(no hay /sim/reset_robot).",
+                "orange"
+            )
+
+            return
+
+        self.set_status(
+            "Reiniciando el robot en Gazebo...",
+            "blue"
+        )
+
+        future = self.reset_client.call_async(
+            Trigger.Request()
+        )
+
+        future.add_done_callback(
+            self.on_reset_done
+        )
+
+
+    def on_reset_done(
+        self,
+        future
+    ):
+
+        # Hilo de ROS: solo guardamos el mensaje.
+
+        try:
+
+            result = future.result()
+
+        except Exception as e:
+
+            self.pending_reset_status = (
+                f"Error al reiniciar: {e}",
+                "red"
+            )
+
+            return
+
+        if result.success:
+
+            self.pending_reset_status = (
+                "✓ Robot reiniciado: de pie y en 0°.",
+                "green"
+            )
+
+        else:
+
+            self.pending_reset_status = (
+                result.message,
+                "orange"
+            )
 
 
     # ========================================================
@@ -1907,6 +2058,22 @@ class TeleopNode(Node):
                 self.get_logger().error(
                     f"Error aplicando resultado de IK ({key}): {e}"
                 )
+
+
+        # ----------------------------------------------------
+        # Resultado del botón "Reiniciar robot".
+        # ----------------------------------------------------
+
+        if self.pending_reset_status is not None:
+
+            message, color = self.pending_reset_status
+
+            self.pending_reset_status = None
+
+            self.set_status(
+                message,
+                color
+            )
 
         self.root.after(
             50,

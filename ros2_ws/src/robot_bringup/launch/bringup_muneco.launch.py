@@ -65,11 +65,16 @@ def _arquitectura(context):
         parameters=[{'num_joints': 3, 'joint_names': joints}],
     )
 
+    # sim_bridge también atiende /sim/reset_robot (botón "Reiniciar
+    # robot" de la interfaz): necesita la misma altura del spawn.
     sim = Node(
         package='robot_simulation',
         executable='sim_bridge',
         name='sim_bridge',
-        parameters=[{'joint_names': joints}],
+        parameters=[{
+            'joint_names': joints,
+            'spawn_z': float(LaunchConfiguration('z').perform(context)),
+        }],
         output='screen',
     )
 
@@ -90,7 +95,10 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('robot_simulation'),
             'launch', 'gazebo_muneco.launch.py')),
-        launch_arguments={'gui': LaunchConfiguration('gui')}.items(),
+        launch_arguments={
+            'gui': LaunchConfiguration('gui'),
+            'z': LaunchConfiguration('z'),
+        }.items(),
     )
 
     return LaunchDescription([
@@ -100,6 +108,9 @@ def generate_launch_description():
                               description='Abrir la interfaz teleop_node'),
         DeclareLaunchArgument('gui', default_value='true',
                               description='Ventana de Gazebo'),
+        DeclareLaunchArgument('z', default_value='0.8',
+                              description='Altura inicial del robot [m] '
+                                          '(spawn y reinicio)'),
         gazebo,
         OpaqueFunction(function=_arquitectura),
     ])
