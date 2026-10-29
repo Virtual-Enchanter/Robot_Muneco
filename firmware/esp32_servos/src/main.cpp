@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include <Adafruit_PWMServoDriver.h>
-#include <Wire.h>
+#include <ESP32Servo.h>
 #include <math.h>
 
 #include <micro_ros_platformio.h>
@@ -21,30 +20,22 @@
 
 // ============================================================
 // Robot Bipedo - Firmware ESP32 con micro-ROS
-// Controla 3 servos RDS51150 via modulo PCA9685 (16 canales PWM, I2C).
-//
-// Conexiones:
-//   ESP32 D21 (SDA)  -> PCA9685 SDA
-//   ESP32 D22 (SCL)  -> PCA9685 SCL
-//   ESP32 D4  (OE)   -> PCA9685 OE   (activo-bajo)
-//   Junta 0 -> PCA9685 PWM2 (Hip Roll)
-//   Junta 1 -> PCA9685 PWM1 (Hip Pitch)
-//   Junta 2 -> PCA9685 PWM0 (Knee)
-//   Los servos (RDS51150) se alimentan con fuente 12V independiente.
+// Controla 6 servos RDS51150 (2 piernas x 3 articulaciones).
+// El PWM sale directo de los GPIO de la ESP32 (sin PCA9685).
 //
 // Suscripcion:  /servo_commands  (std_msgs/Float32MultiArray)
-//   data[0] -> angulo junta 0 (Hip Roll) en grados
-//   data[1] -> angulo junta 1 (Hip Pitch) en grados
-//   data[2] -> angulo junta 2 (Knee) en grados
+//   data[0..2] -> pierna IZQUIERDA: Hip Roll, Hip Pitch, Knee (grados)
+//   data[3..5] -> pierna DERECHA:   Hip Roll, Hip Pitch, Knee (grados)
+//   NaN en un valor -> ese servo mantiene su ultima posicion objetivo.
 //
 // Publicacion:  /servo_states  (std_msgs/Float32MultiArray)
-//   Posicion actual (grados) de cada servo.
+//   Posicion actual (grados) de cada servo, en el mismo orden.
 // ============================================================
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if ((temp_rc != RCL_RET_OK)) { error_loop(); } }
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if ((temp_rc != RCL_RET_OK)) {} }
 
-Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
+Servo servos[NUM_SERVOS];
 
 // micro-ROS objetos
 rclc_support_t support;
@@ -72,31 +63,37 @@ const float APPROACH_OFFSET_DEG = 3.0f;  // 3 grados de aproximación
 const unsigned long SETTLE_MS = 100;      // Tiempo de asentamiento
 
 // ============================================================
+// Escribe el ancho de pulso de un servo
+// ============================================================
+void writeServo(uint8_t servoId, float angleDeg) {
+    servos[servoId].writeMicroseconds(static_cast<int>(angleToUs(servoId, angleDeg)));
+}
+
+// ============================================================
 // Mueve un servo con antibacklash
 // ============================================================
 void moveServo(uint8_t servoId, float angleDeg) {
     const ServoParams& p = SERVO_PARAMS[servoId];
-    
+
     if (ANTI_BACKLASH) {
         // Aproximar desde abajo para eliminar juego de engranajes
         float approachAngle = angleDeg - APPROACH_OFFSET_DEG;
         if (approachAngle < p.angleMin) approachAngle = p.angleMin;
-        
+
         if (approachAngle < angleDeg - 0.5f) {
-            float approachUs = angleToUs(servoId, approachAngle);
-            pwm.setPWM(p.channel, 0, usToTicks(approachUs));
+            writeServo(servoId, approachAngle);
             delay(SETTLE_MS);
         }
     }
-    
+
     // Mover al objetivo final
-    float targetUs = angleToUs(servoId, angleDeg);
-    pwm.setPWM(p.channel, 0, usToTicks(targetUs));
+    writeServo(servoId, angleDeg);
     delay(SETTLE_MS);
 }
 
 // ============================================================
-// Callback: recibe angulos para los 3 servos (guarda objetivos)
+// Callback: recibe angulos para los 6 servos (guarda objetivos)
+// Un NaN deja el objetivo anterior de ese servo.
 // ============================================================
 void cmd_callback(const void* msgin) {
     const std_msgs__msg__Float32MultiArray* msg =
@@ -106,6 +103,7 @@ void cmd_callback(const void* msgin) {
 
     for (int i = 0; i < NUM_SERVOS; i++) {
         float ang = msg->data.data[i];
+        if (isnan(ang)) continue;
         // Clamp a límites específicos del servo
         ang = clampValue(ang, SERVO_PARAMS[i].angleMin, SERVO_PARAMS[i].angleMax);
         target_angle[i] = ang;
@@ -119,20 +117,19 @@ void cmd_callback(const void* msgin) {
 void update_servos() {
     for (int i = 0; i < NUM_SERVOS; i++) {
         float diff = target_angle[i] - current_angle[i];
-        
+
         if (fabsf(diff) > 1.0f) {
             float step = (diff > 0.0f) ? 0.3f : -0.3f;
             current_angle[i] += step;
-            current_angle[i] = clampValue(current_angle[i], 
-                                          SERVO_PARAMS[i].angleMin, 
+            current_angle[i] = clampValue(current_angle[i],
+                                          SERVO_PARAMS[i].angleMin,
                                           SERVO_PARAMS[i].angleMax);
         } else {
             current_angle[i] = target_angle[i];
         }
 
-        // Escribir al canal del PCA9685
-        float us = angleToUs(i, current_angle[i]);
-        pwm.setPWM(SERVO_PARAMS[i].channel, 0, usToTicks(us));
+        // Escribir el PWM del GPIO del servo
+        writeServo(i, current_angle[i]);
         state_data[i] = current_angle[i];
     }
 }
@@ -169,16 +166,12 @@ void setup() {
     Serial.println("\n[ESP32] Booting biped servo controller...");
 
     pinMode(LED_PIN, OUTPUT);
-    pinMode(PIN_OE, OUTPUT);
-    // OE es activo-bajo: LOW = salidas del PCA9685 ACTIVAS
-    digitalWrite(PIN_OE, LOW);
 
-    // Inicializar I2C y PCA9685
-    Wire.begin(PIN_SDA, PIN_SCL, I2C_FREQ);
-    pwm.begin();
-    pwm.setOscillatorFrequency(OSC_FREQ_HZ);  // Nominal por ahora
-    pwm.setPWMFreq(PWM_FREQ_HZ);
-    delay(10);
+    // Adjuntar cada servo a su GPIO (PWM de 50 Hz, 500-2500 us)
+    for (int i = 0; i < NUM_SERVOS; i++) {
+        servos[i].setPeriodHertz(PWM_FREQ_HZ);
+        servos[i].attach(SERVO_PARAMS[i].pin, US_MIN, US_MAX);
+    }
 
     // Posicion inicial escalonada (evitar picos de corriente)
     Serial.println("[ESP32] Moviendo a posicion home...");
@@ -186,13 +179,12 @@ void setup() {
         target_angle[i] = SERVO_PARAMS[i].angleHome;
         current_angle[i] = SERVO_PARAMS[i].angleHome;
         state_data[i] = SERVO_PARAMS[i].angleHome;
-        
-        float us = angleToUs(i, SERVO_PARAMS[i].angleHome);
-        pwm.setPWM(SERVO_PARAMS[i].channel, 0, usToTicks(us));
+
+        writeServo(i, SERVO_PARAMS[i].angleHome);
         delay(200);  // Espera entre servos para evitar picos
     }
 
-    Serial.println("[ESP32] PCA9685 initialized");
+    Serial.println("[ESP32] Servos initialized");
 
     // Configurar micro-ROS transporte serial (UART0 -> USB)
     set_microros_serial_transports(Serial);

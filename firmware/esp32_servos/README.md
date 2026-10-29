@@ -1,21 +1,22 @@
-# Firmware ESP32 - Control de 3 Servos via micro-ROS
+# Firmware ESP32 - Control de 6 servos via micro-ROS
 
-Controla 3 servos conectados a los GPIO **12, 13 y 14** de una **ESP32 DevKit V1**
-usando **micro-ROS** con transporte **serial (USB)**.
+Controla los 6 servos del bípedo (3 por pierna) desde una **ESP32 NodeMCU-32S**
+usando **micro-ROS** con transporte **serial (USB)**. El PWM sale directamente
+de los GPIO de la ESP32, sin módulo PCA9685.
 
 ## Arquitectura
 
 ```
 +------------------+   /servo_commands    +--------------------------------+
-|   ROS2 (host)    | -------------------> |  micro-ROS Agent (USB0 -> host) |
-|  publica orden   |  Float32MultiArray   +--------------------------------+
+|   ROS2 (host)    | -------------------> |  micro-ROS Agent (USB -> host)  |
+|  teleop / ik     |  Float32MultiArray   +--------------------------------+
 +------------------+                                        |
                                                             | serial
                                                             v
 +-------------------------------------------------------------+
 |                      ESP32 (firmware)                       |
-|  - Suscribe a /servo_commands                               |
-|  - Controla servos en GPIO 12, 13, 14 (PWM 500-2500us)      |
+|  - Suscribe a /servo_commands (6 valores)                   |
+|  - PWM 50 Hz directo a GPIO 18, 19, 23, 25, 26, 27          |
 |  - Publica estado en /servo_states                          |
 +-------------------------------------------------------------+
 ```
@@ -24,30 +25,45 @@ usando **micro-ROS** con transporte **serial (USB)**.
 
 | Archivo | Descripcion |
 |---|---|
-| `platformio.ini` | Configuracion de PlatformIO (board, micro-ROS, dependencias) |
-| `src/main.cpp` | Firmware: suscripcion + control de servos + publicacion de estado |
-
-## Temas
-
-- **Suscripcion:** `/servo_commands` (`std_msgs/Float32MultiArray`)
-  - `data[0]` -> angulo servo GPIO 12 (0-180 grados)
-  - `data[1]` -> angulo servo GPIO 13 (0-180 grados)
-  - `data[2]` -> angulo servo GPIO 14 (0-180 grados)
-- **Publicacion:** `/servo_states` (`std_msgs/Float32MultiArray`)
-  - Posicion actual (grados) de cada servo (cada 500 ms)
+| `platformio.ini` | Configuracion de PlatformIO (board, micro-ROS, ESP32Servo) |
+| `include/servo_params.h` | Pin, reposo y límites de cada servo; orden del mensaje |
+| `include/pins.h` | LED indicador |
+| `include/helpers.h` | Conversión de grados a microsegundos |
+| `src/main.cpp` | Firmware: suscripción, control de servos y publicación de estado |
 
 ## Conexion de los servos
 
-| Servo | Señal (GPIO) | Alimentacion |
-|---|---|---|
-| Servo 0 | GPIO 12 | 5V externo |
-| Servo 1 | GPIO 13 | 5V externo |
-| Servo 2 | GPIO 14 | 5V externo |
-| GND (comun) | GND | GND de ESP32 + fuente externa |
+| Servo | Articulacion | GPIO | Posicion en el mensaje |
+|---|---|---|---|
+| S1 | IZQ Hip Roll (cad roll) | 18 | data[0] |
+| S3 | IZQ Hip Pitch (cad pitch) | 23 | data[1] |
+| S2 | IZQ Knee (rod pitch) | 19 | data[2] |
+| S5 | DER Hip Roll (cad roll) | 26 | data[3] |
+| S6 | DER Hip Pitch (cad pitch) | 27 | data[4] |
+| S4 | DER Knee (rod pitch) | 25 | data[5] |
 
-> IMPORTANTE: Alimenta los servos desde una fuente externa de 5V (no desde el
-> pin 5V de la ESP32 si son 3 servos a la vez). Conecta el GND de la fuente al
-> GND de la ESP32.
+Las señales van directo al GPIO de cada servo. La alimentación de los servos
+es **externa de 5 V** (no desde el pin 5V de la ESP32, porque seis servos a la
+vez consumen más de lo que da la placa). El GND de la fuente debe unirse al GND
+de la ESP32.
+
+> Verifica con el multímetro o el osciloscopio que cada GPIO llega a su servo
+> correcto antes de conectar la alimentación.
+
+## Protocolo `/servo_commands`
+
+- **Tipo:** `std_msgs/Float32MultiArray`, con 6 valores en grados.
+- **Orden:** `[IZQ Hip Roll, IZQ Hip Pitch, IZQ Knee, DER Hip Roll, DER Hip Pitch, DER Knee]`.
+- **NaN:** un valor `NaN` significa "no cambiar este servo". El firmware
+  conserva su última posición objetivo. El teleop lo usa para la pierna que no controla.
+- Los valores se limitan a los rangos de `servo_params.h`.
+
+Ejemplo (mueve solo la pierna izquierda, deja la derecha quieta):
+
+```bash
+ros2 topic pub --once /servo_commands std_msgs/msg/Float32MultiArray \
+  "{data: [90.0, 90.0, 90.0, nan, nan, nan]}"
+```
 
 ## Pasos
 
@@ -86,21 +102,21 @@ ros2 topic echo /servo_states
 ### 4. Mover los servos
 
 ```bash
-# Movil todos los servos a 90 grados
-ros2 topic pub --once /servo_commands std_msgs/msg/Float32MultiArray "{data: [90.0, 90.0, 90.0]}"
-
-# Servo 0 a 45°, servo 1 a 90°, servo 2 a 135°
-ros2 topic pub --once /servo_commands std_msgs/msg/Float32MultiArray "{data: [45.0, 90.0, 135.0]}"
+# Mueve los 6 servos a 90 grados
+ros2 topic pub --once /servo_commands std_msgs/msg/Float32MultiArray \
+  "{data: [90.0, 90.0, 90.0, 90.0, 90.0, 90.0]}"
 ```
 
 ## Tipos de mensaje
 
-El firmware usa `std_msgs/Float32MultiArray` que ya viene incluido en la libreria
+El firmware usa `std_msgs/Float32MultiArray`, que ya viene incluido en la librería
 micro-ROS estandar, por lo que no requiere generar mensajes custom.
 
 ## Notas
 
-- La compilacion de la stack micro-ROS tarda la primera vez (descarga y compila
+- Los límites y el reposo de cada servo están copiados del esquema anterior y
+  son **nominales, pendientes de calibrar**. Ver `include/servo_params.h`.
+- La compilación de la stack micro-ROS tarda la primera vez (descarga y compila
   todos los paquetes). Las siguientes compilaciones son rapidas.
 - **IMPORTANTE:** no uses un `extra_micro_ros.meta` con opciones del host
   (`-DUHANDLER_AGENT_URL`, `-DMICROROS_TRANSPORT`), rompe el build del firmware y
@@ -116,27 +132,6 @@ micro-ROS estandar, por lo que no requiere generar mensajes custom.
 
 ## Integracion con los sliders del teleop
 
-El `teleop_node` del workspace ROS2 (lanzado por `bringup.launch.py`) publica
-tambien en `/servo_commands`, mapeando los grados de cada slider al rango del
-servo:
-
-- Centro del rango de cada articulacion -> 90° (servo neutro)
-- Minimo del rango -> 0°
-- Maximo del rango -> 180°
-
-Para usarlo, en una terminal lanza el micro-ROS agent y deja la ESP32 conectada,
-y en otra lanza el tetleop:
-
-```bash
-# Terminal 1: agente
-source /opt/ros/humble/setup.bash
-source ~/microros_ws/install/setup.bash
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v6
-
-# Terminal 2: launch con sliders (abre la ventana)
-source /opt/ros/humble/setup.bash
-source ~/Documents/Robot_Bipedo/ros2_ws/install/setup.bash
-ros2 launch robot_bringup bringup.launch.py
-```
-
-Al mover los sliders, los servos de la ESP32 se moveran.
+El `teleop_node` del workspace ROS2 (lanzado por `bringup.launch.py`) publica en
+`/servo_commands` seis valores: los tres de su pierna y `NaN` para la otra. El
+firmware recibe así las órdenes de cada pierna sin mover la contraria.

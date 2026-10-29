@@ -61,8 +61,10 @@ robot_simulation
   sim.launch.py: lanza solo el sim_bridge.
 
 firmware/esp32_servos
-  Firmware de la ESP32 (PlatformIO + micro-ROS). Se suscribe a /servo_commands
-  y publica /servo_states. Ver su README para cómo conectarlo.
+  Firmware de la ESP32 (PlatformIO + micro-ROS). Controla los 6 servos (3 por
+  pierna) con PWM directo desde los GPIO 18, 19, 23, 25, 26 y 27, sin PCA9685.
+  Se suscribe a /servo_commands (6 valores: IZQ roll/pitch/knee, DER roll/pitch/knee;
+  NaN = no mover) y publica /servo_states. Ver su README.
 
 ## Tópicos y nodos
 
@@ -76,7 +78,7 @@ Pierna (bringup.launch.py leg:=...):
   control_node --/robot/joint_commands--> sim_bridge
 
   teleop_node --/robot/ik_*_target-------> ik_node --/robot/ik_*_result--> teleop_node
-  teleop_node --/servo_commands---------> firmware ESP32 (micro-ROS)
+  teleop_node --/servo_commands (6 valores)--> firmware ESP32 (micro-ROS)
 
 Notas:
 - control_node publica /joint_states y el launch lo remapea a /joint_states_pata,
