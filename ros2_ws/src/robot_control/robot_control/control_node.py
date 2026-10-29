@@ -51,10 +51,11 @@ class ControlNode(Node):
 
         # Default = pierna derecha
         # (Right_Hip_Roll/Pitch + Right_Knee, ver
-        # robot_description/urdf/urdf_der).
+        # robot_description/urdf/urdf_muneco).
         #
-        # bringup_izq.launch.py sobreescribe esto con los
-        # joints Left_* al lanzar la pata izquierda.
+        # bringup_pierna.launch.py / bringup_muneco.launch.py
+        # sobreescriben esto con los joints Left_* al lanzar
+        # la pata izquierda.
 
         self.declare_parameter(
             'joint_names',

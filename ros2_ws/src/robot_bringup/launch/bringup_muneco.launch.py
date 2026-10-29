@@ -37,13 +37,15 @@ PIERNAS = {
     'izq': ('left', ['Left_Hip_Roll_Joint', 'Left_Hip_Pitch_Joint',
                      'Left_Knee_Joint']),
 }
+PIERNAS['right'] = PIERNAS['der']   # alias (rama de Hean Felipe)
+PIERNAS['left'] = PIERNAS['izq']
 
 
 def _arquitectura(context):
     leg = LaunchConfiguration('leg').perform(context).lower()
     if leg not in PIERNAS:
         raise RuntimeError(
-            f"leg:='{leg}' no es válido. Use leg:=izq o leg:=der.")
+            f"leg:='{leg}' no es válido. Use leg:=izq|der (o left|right).")
     leg_side, joints = PIERNAS[leg]
 
     kinematics = Node(

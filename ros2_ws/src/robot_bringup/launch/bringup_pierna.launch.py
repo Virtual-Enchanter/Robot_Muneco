@@ -5,9 +5,14 @@ Reemplaza a bringup_der.launch.py y bringup_izq.launch.py, que eran el
 mismo archivo (~990 líneas entre los dos) salvo por los nombres de los
 joints y el lado de la pierna.
 
+Integración: Hean Felipe Gómez hizo la misma unificación en su rama
+(bringup.launch.py leg:=right|left). Aquí se conserva un solo launch y
+se aceptan los dos nombres de pierna: izq|der y left|right.
+
 Uso:
     ros2 launch robot_bringup bringup_pierna.launch.py leg:=izq
     ros2 launch robot_bringup bringup_pierna.launch.py leg:=der use_rviz:=false
+    ros2 launch robot_bringup bringup_pierna.launch.py leg:=right   # alias
 
 Para la simulación en Gazebo usar bringup_muneco.launch.py.
 
@@ -43,7 +48,8 @@ IMPORTANTE:
     Una pierna a la vez: las dos piernas usan los mismos nombres de
     nodos y tópicos (no hay namespaces).
 
-    robot_serial_bridge NO se inicia desde aquí; se ejecuta aparte.
+    La ESP32 (firmware esp32_servos) se comunica por micro-ROS con su
+    propio micro-ROS agent; no se inicia desde este launch.
 """
 
 import os
@@ -83,12 +89,16 @@ PIERNAS = {
     },
 }
 
+# Nombres en inglés de la rama de Hean Felipe (bringup.launch.py).
+PIERNAS['right'] = PIERNAS['der']
+PIERNAS['left'] = PIERNAS['izq']
+
 
 def _nodos_de_la_pierna(context):
     leg = LaunchConfiguration('leg').perform(context).lower()
     if leg not in PIERNAS:
         raise RuntimeError(
-            f"leg:='{leg}' no es válido. Use leg:=izq o leg:=der.")
+            f"leg:='{leg}' no es válido. Use leg:=izq|der (o left|right).")
     pierna = PIERNAS[leg]
 
     n = int(LaunchConfiguration('num_joints').perform(context))
@@ -181,7 +191,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'leg', default_value='izq',
-            description='Pierna a probar: izq o der'),
+            description='Pierna a probar: izq|der (o left|right)'),
         DeclareLaunchArgument(
             'num_joints', default_value='3',
             description='Juntas por pierna'),

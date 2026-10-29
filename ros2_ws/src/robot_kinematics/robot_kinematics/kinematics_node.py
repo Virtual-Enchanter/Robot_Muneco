@@ -13,9 +13,15 @@
 #
 # Los cinco nodos IK eran el mismo código copiado: solo cambiaban la
 # función de cinemática inversa y el prefijo del tópico. Aquí cada
-# método es una entrada de la tabla SOLVERS (misma estructura que en el
-# repositorio del bípedo; solo cambian los módulos, porque el muñeco
-# tiene sus propias longitudes L1..L5).
+# método es una entrada de la tabla SOLVERS.
+#
+# Integración (rama feature/integracion-final-optimizaciones):
+#   - Santiago Sarria: reenvío + 5 métodos IK en un solo proceso.
+#   - Hean Felipe Gómez: un grupo de callbacks POR MÉTODO (antes había
+#     un solo grupo para toda la IK) y la matemática común en
+#     kinem_common.py (L1..L5, límites, DH, FK y avisos de límites).
+#   Su ik_node.py (5 métodos en un proceso) quedó absorbido aquí, así
+#   que la arquitectura sigue con UN nodo de cinemática.
 #
 # Los NOMBRES Y TIPOS DE TÓPICOS NO CAMBIAN, así que la tabla
 # IK_METHODS de teleop_node sigue funcionando igual.
@@ -29,9 +35,12 @@
 #   enable_ik   (bool, True)    activa los resolutores IK.
 #   ik_methods  (str[], todos)  subconjunto de métodos a activar.
 #
-# Ejecutor multihilo con dos grupos de callbacks: el reenvío de
-# /robot/command nunca queda bloqueado mientras un método iterativo
-# (Newton o gradiente, hasta 10000 iteraciones) está resolviendo.
+# Concurrencia (ejecutor multihilo):
+#   - El reenvío de /robot/command tiene su propio grupo: nunca queda
+#     bloqueado mientras un método iterativo resuelve.
+#   - Cada método IK tiene su propio grupo: el gradiente descendente
+#     (hasta 10000 iteraciones) no bloquea a los otros cuatro.
+#   Hilos = 1 (reenvío) + número de métodos activos.
 # ============================================================
 
 from functools import partial
@@ -48,6 +57,10 @@ from robot_kinematics import kinem_invers_leg_Geometrico_izq as geom
 from robot_kinematics import kinem_invers_leg_gradiente_descendente as grad
 from robot_kinematics import kinem_invers_leg_mth_desacople_izq as des
 from robot_kinematics import kinem_invers_leg_Newton_izq as newton
+from robot_kinematics.kinem_common import (
+    L1, L2, L3, L4, L5,
+    joint_limit_warnings,
+)
 
 
 # ------------------------------------------------------------
@@ -56,8 +69,9 @@ from robot_kinematics import kinem_invers_leg_Newton_izq as newton
 #   topic   : prefijo -> /robot/<topic>_target, /robot/<topic>_result
 #   seed    : True si el objetivo trae semilla (IKJacobTarget)
 #   solve   : función (x, y, z, semilla) -> (q1, q2, q3, alcanzable)
-#   warnings: función de advertencias de límites del mismo módulo
 #   fail    : texto cuando no hay solución
+# Los avisos de límites salen de kinem_common.joint_limit_warnings,
+# la misma función para los cinco métodos.
 # ------------------------------------------------------------
 
 SOLVERS = {
@@ -65,8 +79,7 @@ SOLVERS = {
         'topic': 'ik',
         'seed': False,
         'solve': lambda x, y, z, _: alg.cinematica_inversa_pata_alg(
-            x, y, z, alg.L1, alg.L2, alg.L3, alg.L4, alg.L5),
-        'warnings': alg.joint_limit_warnings,
+            x, y, z, L1, L2, L3, L4, L5),
         'fail': 'no alcanzable.',
     },
     'desacople': {
@@ -74,15 +87,13 @@ SOLVERS = {
         'seed': False,
         'solve': lambda x, y, z, _: des.cinematica_inversa_pata_des_xyz(
             x, y, z),
-        'warnings': des.joint_limit_warnings,
         'fail': 'no alcanzable.',
     },
     'geometrico': {
         'topic': 'ik_geom',
         'seed': False,
         'solve': lambda x, y, z, _: geom.cinematica_inversa_pata_geom(
-            x, y, z, geom.L1, geom.L2, geom.L3, geom.L4, geom.L5),
-        'warnings': geom.joint_limit_warnings,
+            x, y, z, L1, L2, L3, L4, L5),
         'fail': 'no alcanzable.',
     },
     'newton': {
@@ -90,7 +101,6 @@ SOLVERS = {
         'seed': True,
         'solve': lambda x, y, z, seed: newton.cinematica_inversa_pata_newton(
             x, y, z, *seed),
-        'warnings': newton.joint_limit_warnings,
         'fail': 'no alcanzable o no convergió desde la semilla',
     },
     'gradiente': {
@@ -98,7 +108,6 @@ SOLVERS = {
         'seed': True,
         'solve': lambda x, y, z, seed: grad.cinematica_inversa_pata_grad(
             x, y, z, *seed),
-        'warnings': grad.joint_limit_warnings,
         'fail': 'no convergió desde la semilla',
     },
 }
@@ -123,13 +132,11 @@ class KinematicsNode(Node):
         enable_ik = bool(self.get_parameter('enable_ik').value)
         methods = [str(m) for m in self.get_parameter('ik_methods').value]
 
-        # Grupos de callbacks: el reenvío y la IK corren por separado.
-        self._relay_group = MutuallyExclusiveCallbackGroup()
-        self._ik_group = MutuallyExclusiveCallbackGroup()
-
         # ----------------------------------------------------
         # REENVÍO teleop -> control (antes: kinematics_node)
+        # Grupo propio: no espera a ningún método IK.
         # ----------------------------------------------------
+        self._relay_group = MutuallyExclusiveCallbackGroup()
         self.sub = self.create_subscription(
             RobotCommand, '/robot/command', self.on_cmd, 10,
             callback_group=self._relay_group)
@@ -162,11 +169,15 @@ class KinematicsNode(Node):
         cfg = SOLVERS[key]
         topic = cfg['topic']
 
+        # Un grupo por método: las peticiones de un mismo método se
+        # atienden en orden, pero métodos distintos corren en paralelo.
+        group = MutuallyExclusiveCallbackGroup()
+
         msg_type = IKJacobTarget if cfg['seed'] else Point
         self.create_subscription(
             msg_type, f'/robot/{topic}_target',
             partial(self.on_ik_target, key), 10,
-            callback_group=self._ik_group)
+            callback_group=group)
 
         self.ik_pubs[key] = self.create_publisher(
             IKResult, f'/robot/{topic}_result', 10)
@@ -202,7 +213,7 @@ class KinematicsNode(Node):
         if alcanzable:
             result.position = [float(q1), float(q2), float(q3)]
             q_deg = np.degrees([q1, q2, q3])
-            for warning in cfg['warnings'](*q_deg):
+            for warning in joint_limit_warnings(*q_deg):
                 self.get_logger().warn(f'[{key}] {warning}')
         else:
             result.position = []
@@ -219,7 +230,8 @@ class KinematicsNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = KinematicsNode()
-    executor = MultiThreadedExecutor(num_threads=2)
+    # 1 hilo para el reenvío + 1 por cada método IK activo.
+    executor = MultiThreadedExecutor(num_threads=1 + max(1, len(node.ik_pubs)))
     executor.add_node(node)
     try:
         executor.spin()

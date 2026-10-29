@@ -11,21 +11,17 @@ import numpy as np
 
 # Dimensiones físicas (mm)
 from robot_kinematics.cinematica_directa_der_izq import L1, L2, L3, L4, L5
-
-# Límites articulares [°]
-q1_min, q1_max = 0, 90
-q2_min, q2_max = -90, 90
-q3_min, q3_max = -90, 90
-
-
-def dh_matrix(theta, d, a, alpha):
-    ct, st = np.cos(theta), np.sin(theta)
-    ca, sa = np.cos(alpha), np.sin(alpha)
-    return np.array([
-        [ct, -st*ca,  st*sa, a*ct],
-        [st,  ct*ca, -ct*sa, a*st],
-        [0,   sa,     ca,    d   ],
-        [0,   0,      0,     1   ]])
+from robot_kinematics.kinem_common import (
+    dh_matrix,
+    fk_T,
+    joint_limit_warnings,
+    q1_max,
+    q1_min,
+    q2_max,
+    q2_min,
+    q3_max,
+    q3_min,
+)
 
 
 def calcular_jacobiano_rad(q_rad, L1, L2, L3, L4, L5):
@@ -104,8 +100,8 @@ def cinematica_inversa_newton(objetivo, q_inicial_grados, tolerancia=0.1, max_it
 def cinematica_inversa_pata_newton(x, y, z,
                                    q1_seed_deg, q2_seed_deg, q3_seed_deg):
     """
-    Misma interfaz que los demás métodos (la usan ik_newton_node y la
-    interfaz): punto (x, y, z) [mm] y semilla [°].
+    Misma interfaz que los demás métodos (la usa kinematics_node): punto
+    (x, y, z) [mm] y semilla [°].
 
     Retorna (q1, q2, q3, alcanzable) con los ángulos en radianes.
     alcanzable es False si no es alcanzable o no converge dentro de
@@ -120,16 +116,6 @@ def cinematica_inversa_pata_newton(x, y, z,
 
     q1, q2, q3 = np.radians(q_deg)
     return q1, q2, q3, True
-
-
-def joint_limit_warnings(q1_deg, q2_deg, q3_deg, tol=1e-6):
-    warnings = []
-    for nombre, v, mn, mx in (("q1", q1_deg, q1_min, q1_max),
-                              ("q2", q2_deg, q2_min, q2_max),
-                              ("q3", q3_deg, q3_min, q3_max)):
-        if not (mn - tol) <= v <= (mx + tol):
-            warnings.append(f"{nombre} fuera de rango [{mn}°, {mx}°]")
-    return warnings
 
 
 if __name__ == "__main__":

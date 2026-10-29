@@ -9,6 +9,8 @@ _Robot bípedo y muñeco bípedo · Recuento, depuración y unificación de paqu
 
 > Versión en texto del PDF del entregable. El PDF es el documento oficial.
 
+> **Actualización (rama `feature/integracion-final-optimizaciones`):** este documento describe la rama `feature/optimizacion-arquitectura-muneco`. Al integrar el trabajo de Hean Felipe Gómez se eliminaron `robot_serial_bridge` y `firmware/control_pata_sin_ros` (las filas que dicen "Se conserva sin cambios" ya no aplican en el muñeco), se agregó `kinem_common.py` y `kinematics_node` pasó a un grupo de callbacks por método. Ver `docs/arquitectura/INTEGRACION_OPTIMIZACIONES.md`.
+
 ## 1. Resumen
 
 Se auditaron los dos repositorios (8 paquetes ROS 2 cada uno) leyendo el código fuente extraído de los .zip y ejecutando la arquitectura en un entorno ROS 2 de prueba. La redundancia principal estaba en robot_kinematics: cinco nodos de cinemática inversa con el mismo código copiado, más el nodo de reenvío, corrían como seis procesos. Se unificaron en un solo kinematics_node que conserva exactamente los mismos tópicos, de modo que la interfaz (teleop_node) no cambia. También se unificaron los launch duplicados por pierna, se eliminaron caminos de tópicos sin publicador o sin suscriptor, módulos huérfanos de los cortes 1 y 2 y archivos de prueba. En el muñeco se integró la simulación de Gazebo del workspace muneco_ws y se corrigió el puente control → Gazebo, que enviaba 3 valores a un controlador de 6 articulaciones.

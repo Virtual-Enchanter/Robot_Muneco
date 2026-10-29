@@ -1109,9 +1109,12 @@ class TeleopNode(Node):
         # Mensaje para los servos
         # ----------------------------------------------------
 
-        servo_msg = Float32MultiArray()
-
-        servo_msg.data = [
+        # El firmware de la ESP32 espera 6 valores:
+        #   [IZQ Hip Roll, IZQ Hip Pitch, IZQ Knee,
+        #    DER Hip Roll, DER Hip Pitch, DER Knee]
+        # Esta interfaz controla una sola pierna; la otra se envía
+        # como NaN para que el firmware no la mueva.
+        pierna = [
             float(
                 self.target_deg[i]
                 + self.servo_offset_deg[i]
@@ -1120,6 +1123,13 @@ class TeleopNode(Node):
                 self.num_joints
             )
         ]
+
+        servo_msg = Float32MultiArray()
+
+        if self.leg_side == 'right':
+            servo_msg.data = [math.nan] * self.num_joints + pierna
+        else:
+            servo_msg.data = pierna + [math.nan] * self.num_joints
 
         self.servo_pub.publish(
             servo_msg
